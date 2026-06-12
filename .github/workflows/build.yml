@@ -35,19 +35,26 @@ jobs:
         echo "Unzipping..."
         unzip iPhoneOS6.0.sdk.zip
         echo ""
-        echo "=== Files after unzip ==="
-        ls -la
+        echo "=== All files after unzip (recursive) ==="
+        find . -type f | head -30
+        echo ""
+        echo "=== All .sdk folders (recursive, any depth) ==="
+        find . -type d -name "*.sdk"
         echo ""
         
-        # Find the actual SDK folder name
-        SDK_FOLDER=$(find . -maxdepth 1 -type d -name "*.sdk" | head -1 | sed 's|^\./||')
-        echo "Found SDK folder: $SDK_FOLDER"
+        # Find the SDK folder at any depth
+        SDK_FOLDER=$(find . -type d -name "*.sdk" | head -1 | sed 's|^\./||')
+        echo "Found SDK folder path: $SDK_FOLDER"
         
-        if [ -n "$SDK_FOLDER" ] && [ -d "$SDK_FOLDER" ]; then
-          echo "Moving $SDK_FOLDER to \$THEOS/sdks/iPhoneOS6.0.sdk"
-          mv "$SDK_FOLDER" $THEOS/sdks/iPhoneOS6.0.sdk
+        if [ -n "$SDK_FOLDER" ]; then
+          echo "Creating $THEOS/sdks/iPhoneOS6.0.sdk"
+          mkdir -p $THEOS/sdks/iPhoneOS6.0.sdk
+          echo "Copying contents..."
+          cp -r "$SDK_FOLDER"/. $THEOS/sdks/iPhoneOS6.0.sdk/
+          rm -rf iPhoneOS6.0.sdk.zip
         else
           echo "ERROR: No .sdk folder found!"
+          ls -laR | head -50
           exit 1
         fi
         
