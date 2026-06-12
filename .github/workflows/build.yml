@@ -23,12 +23,28 @@ jobs:
         echo "THEOS=$HOME/theos" >> $GITHUB_ENV
         echo "$HOME/theos/bin" >> $GITHUB_PATH
         
-    - name: Download iOS 6.1 SDK
+    - name: Download iOS 6.0 SDK
       run: |
         mkdir -p $THEOS/sdks
         curl -L "https://github.com/GrowtopiaJaw/iPhoneOS-SDK/releases/download/v1.0/iPhoneOS6.0.sdk.zip" -o /tmp/iPhoneOS6.0.sdk.zip
-        unzip -q /tmp/iPhoneOS6.0.sdk.zip -d $THEOS/sdks/
+        unzip -q /tmp/iPhoneOS6.0.sdk.zip -d /tmp/
+        # Check what was extracted and move to correct location
+        if [ -d /tmp/iPhoneOS6.0.sdk ]; then
+          mv /tmp/iPhoneOS6.0.sdk $THEOS/sdks/
+        else
+          # Find the extracted folder and rename it
+          EXTRACTED=$(find /tmp -maxdepth 1 -type d -name "*.sdk" | head -1)
+          if [ -n "$EXTRACTED" ]; then
+            mv $EXTRACTED $THEOS/sdks/iPhoneOS6.0.sdk
+          fi
+        fi
         rm /tmp/iPhoneOS6.0.sdk.zip
+        ls -la $THEOS/sdks/
+
+    - name: Fix SDK Version Check
+      run: |
+        # Create symlink for 6.1 to point to 6.0
+        ln -s $THEOS/sdks/iPhoneOS6.0.sdk $THEOS/sdks/iPhoneOS6.1.sdk
         ls -la $THEOS/sdks/
 
     - name: Build NewTerm
