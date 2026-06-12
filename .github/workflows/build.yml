@@ -35,11 +35,22 @@ jobs:
         echo "Unzipping..."
         unzip iPhoneOS6.0.sdk.zip
         echo ""
-        echo "Files after unzip:"
+        echo "=== Files after unzip ==="
         ls -la
         echo ""
-        echo "Moving SDK to Theos..."
-        mv iPhoneOS6.0.sdk $THEOS/sdks/
+        
+        # Find the actual SDK folder name
+        SDK_FOLDER=$(find . -maxdepth 1 -type d -name "*.sdk" | head -1 | sed 's|^\./||')
+        echo "Found SDK folder: $SDK_FOLDER"
+        
+        if [ -n "$SDK_FOLDER" ] && [ -d "$SDK_FOLDER" ]; then
+          echo "Moving $SDK_FOLDER to \$THEOS/sdks/iPhoneOS6.0.sdk"
+          mv "$SDK_FOLDER" $THEOS/sdks/iPhoneOS6.0.sdk
+        else
+          echo "ERROR: No .sdk folder found!"
+          exit 1
+        fi
+        
         echo ""
         echo "=== SDKs in THEOS ==="
         ls -la $THEOS/sdks/
