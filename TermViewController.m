@@ -19,8 +19,10 @@
     self.title = @"NewTerm";
     
     self.sessionManager = [[SessionManager alloc] init];
+    self.sessionManager.delegate = self;
     
     self.termView = [[TermView alloc] initWithFrame:self.view.bounds];
+    self.termView.hiddenInput.keyboardType = UIKeyboardTypeAsciiCapable;
     [self.view addSubview:self.termView];
     
     [self setupToolbar];
@@ -41,7 +43,7 @@
 - (void)setupToolbar {
     CGFloat toolbarHeight = 44.0;
     CGRect toolbarFrame = CGRectMake(0, self.view.frame.size.height - toolbarHeight, 
-                                      self.view.frame.size.width, toolbarHeight);
+                                       self.view.frame.size.width, toolbarHeight);
     
     self.toolbar = [[UIToolbar alloc] initWithFrame:toolbarFrame];
     self.toolbar.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleTopMargin;
@@ -69,6 +71,16 @@
     CGRect terminalFrame = CGRectMake(0, 0, self.view.frame.size.width, 
                                        self.view.frame.size.height - toolbarHeight);
     self.termView.frame = terminalFrame;
+    
+    UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self 
+                                                                               action:@selector(handleTap:)];
+    [self.termView addGestureRecognizer:tapGesture];
+    
+    self.termView.hiddenInput.delegate = self;
+}
+
+- (void)handleTap:(UITapGestureRecognizer *)gesture {
+    [self.termView.hiddenInput becomeFirstResponder];
 }
 
 - (void)newTerminalSession {
@@ -103,14 +115,63 @@
 - (void)pasteToTerminal {
     NSString *text = [UIPasteboard generalPasteboard].string;
     if (text) {
-        [self.termView sendText:text];
         [self.sessionManager sendCommand:text];
     }
 }
 
+#pragma mark - SessionManagerDelegate
+
+- (void)sessionDidConnect {
+    [self.termView appendText:@"\n[Connected to local session]\n"];
+    [self.termView.hiddenInput becomeFirstResponder];
+}
+
+- (void)sessionDidDisconnect {
+    [self.termView appendText:@"\n[Disconnected]\n"];
+}
+
+- (void)session:(id)session didReceiveData:(NSData *)data {
+    NSString *text = [[NSString alloc] initWithBytes:[data bytes] 
+                                              length:[data length] 
+                                            encoding:NSUTF8StringEncoding];
+    if (text) {
+        [self.termView appendText:text];
+    }
+}
+
+- (void)session:(id)session didFailWithError:(NSError *)error {
+    [self.termView appendText:[NSString stringWithFormat:@"\n[Error: %@]\n", [error localizedDescription]]];
+}
+
+#pragma mark - UITextFieldDelegate
+
+- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string {
+    if ([string isEqualToString:@"\n"] || [string isEqualToString:@"\r"]) {
+        [self.sessionManager sendCommand:@"\n"];
+        return NO;
+    }
+    
+    if ([string isEqualToString:@"\b"] || [string isEqualToString:@"\x7f"]) {
+        [self.sessionManager sendCommand:@"\x7f"];
+        return NO;
+    }
+    
+    if (string.length > 0) {
+        [self.sessionManager sendCommand:string];
+        [self.termView appendText:string];
+        return NO;
+    }
+    
+    return YES;
+}
+
+- (BOOL)textFieldShouldReturn:(UITextField *)textField {
+    [self.sessionManager sendCommand:@"\n"];
+    [textField setText:@""];
+    return NO;
+}
+
 - (void)dealloc {
-    // ARC handles memory management automatically
-    // Properties: termView, sessionManager, toolbar, newTabButton, settingsButton, copyButton
 }
 
 @end

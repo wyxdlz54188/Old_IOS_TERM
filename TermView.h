@@ -1,17 +1,6 @@
 #import <UIKit/UIKit.h>
 
-@interface TermView : UIView {
-    NSString *_buffer;
-    UIColor *_textColor;
-    UIColor *_backgroundColor;
-    UIColor *_cursorColor;
-    UIFont *_terminalFont;
-    NSInteger _cursorX;
-    NSInteger _cursorY;
-    NSInteger _columns;
-    NSInteger _rows;
-    BOOL _cursorVisible;
-}
+@interface TermView : UIView
 
 @property (nonatomic, retain) NSString *buffer;
 @property (nonatomic, retain) UIColor *textColor;
@@ -23,11 +12,12 @@
 @property (nonatomic, assign) NSInteger columns;
 @property (nonatomic, assign) NSInteger rows;
 @property (nonatomic, assign) BOOL cursorVisible;
+@property (nonatomic, retain) UITextField *hiddenInput;
 
 - (void)appendText:(NSString *)text;
+- (void)sendText:(NSString *)text;
 - (void)clearScreen;
 - (void)moveCursorToRow:(NSInteger)row column:(NSInteger)col;
-- (void)sendText:(NSString *)text;
 - (void)showCursor;
 - (void)hideCursor;
 

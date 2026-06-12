@@ -3,7 +3,9 @@
 @class TermView;
 @class SessionManager;
 
-@interface TermViewController : UIViewController {
+@protocol SessionManagerDelegate;
+
+@interface TermViewController : UIViewController <SessionManagerDelegate> {
     TermView *_termView;
     SessionManager *_sessionManager;
     UIToolbar *_toolbar;

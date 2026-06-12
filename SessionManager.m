@@ -66,19 +66,16 @@
 }
 
 - (void)startReadingPTY {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.1 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.05 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
         if (_ptyFd > 0) {
             char buffer[4096];
             ssize_t bytesRead = read(_ptyFd, buffer, sizeof(buffer));
             
             if (bytesRead > 0) {
-                NSString *text = [[NSString alloc] initWithBytes:buffer 
-                                                          length:bytesRead 
-                                                        encoding:NSUTF8StringEncoding];
-                if (text && [_delegate respondsToSelector:@selector(appendText:)]) {
-                    [_delegate performSelector:@selector(appendText:) withObject:text];
+                NSData *data = [NSData dataWithBytes:buffer length:bytesRead];
+                if ([_delegate respondsToSelector:@selector(session:didReceiveData:)]) {
+                    [_delegate session:self didReceiveData:data];
                 }
-                // ARC handles text release automatically
             }
             
             [self startReadingPTY];

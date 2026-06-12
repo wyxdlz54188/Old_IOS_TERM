@@ -1,5 +1,8 @@
 #import "TermView.h"
 
+@interface TermView () <UITextFieldDelegate>
+@end
+
 @implementation TermView
 
 @synthesize buffer = _buffer, textColor = _textColor, backgroundColor = _backgroundColor;
@@ -29,6 +32,19 @@
 - (void)setupView {
     self.userInteractionEnabled = YES;
     self.multipleTouchEnabled = NO;
+    
+    self.hiddenInput = [[UITextField alloc] initWithFrame:CGRectZero];
+    self.hiddenInput.keyboardType = UIKeyboardTypeAsciiCapable;
+    self.hiddenInput.autocorrectionType = UITextAutocorrectionTypeNo;
+    self.hiddenInput.autocapitalizationType = UITextAutocapitalizationTypeNone;
+    self.hiddenInput.spellCheckingType = UITextSpellCheckingTypeNo;
+    self.hiddenInput.returnKeyType = UIReturnKeySend;
+    self.hiddenInput.delegate = self;
+    [self addSubview:self.hiddenInput];
+}
+
+- (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
+    [self.hiddenInput becomeFirstResponder];
 }
 
 - (void)drawRect:(CGRect)rect {
@@ -112,8 +128,11 @@
     [self setNeedsDisplay];
 }
 
+- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string {
+    return NO;
+}
+
 - (void)dealloc {
-    // ARC handles memory management automatically
 }
 
 @end
