@@ -37,7 +37,9 @@
         NSLog(@"Failed to create PTY");
         return;
     } else if (_pid == 0) {
-        execl([_shellPath UTF8String], [_shellPath lastPathComponent], "-l", NULL);
+        const char *shellPath = [_shellPath UTF8String];
+        const char *shellName = [[_shellPath lastPathComponent] UTF8String];
+        execl(shellPath, shellName, "-l", NULL);
         exit(1);
     }
     

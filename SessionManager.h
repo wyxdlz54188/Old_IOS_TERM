@@ -16,7 +16,7 @@
     pid_t _childPid;
 }
 
-@property (nonatomic, assign) id<SessionManagerDelegate> delegate;
+@property (nonatomic, unsafe_unretained) id<SessionManagerDelegate> delegate;
 @property (nonatomic, retain) NSString *host;
 @property (nonatomic, assign) NSInteger port;
 @property (nonatomic, assign) BOOL isConnected;

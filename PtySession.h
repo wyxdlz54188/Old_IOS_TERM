@@ -9,7 +9,7 @@
     NSString *_shellPath;
 }
 
-@property (nonatomic, assign) id<PtySessionDelegate> delegate;
+@property (nonatomic, unsafe_unretained) id<PtySessionDelegate> delegate;
 @property (nonatomic, retain) NSString *shellPath;
 @property (nonatomic, readonly) int masterFd;
 @property (nonatomic, readonly) pid_t pid;
