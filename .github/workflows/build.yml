@@ -3,70 +3,43 @@ name: Build NewTerm iOS 6
 on:
   push:
     branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
 
 jobs:
   build:
     name: Build NewTerm (iOS 6.0)
-    runs-on: macos-latest
+    runs-on: macos-12
     
     steps:
     - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Setup Theos
-      uses: actions/checkout@v4
-      with:
-        repository: theos/theos
-        path: theos
-        submodules: recursive
-
-    - name: Setup Theos Environment
+    - name: Install Theos dependencies
       run: |
+        brew install make dpkg
+
+    - name: Setup Theos
+      run: |
+        git clone --recursive --depth 1 https://github.com/theos/theos.git $HOME/theos
         echo "THEOS=$HOME/theos" >> $GITHUB_ENV
         echo "$HOME/theos/bin" >> $GITHUB_PATH
+        echo "THEOS_PROJECT_DIR=$PWD" >> $GITHUB_ENV
 
-    - name: Download iOS SDK
+    - name: Download iOS SDKs
       run: |
         mkdir -p $THEOS/sdks
-        curl -L https://github.com/theos/sdks/archive/master.tar.gz -o sdks.tar.gz
-        tar -xzf sdks.tar.gz
-        mv sdks-master/*.sdk $THEOS/sdks/ || true
-        if [ ! -d "$THEOS/sdks/iPhoneOS6.0.sdk" ]; then
-          echo "Using iPhoneOS.sdk as iPhoneOS6.0.sdk"
-          mv $THEOS/sdks/*.sdk $THEOS/sdks/iPhoneOS6.0.sdk 2>/dev/null || true
-        fi
-        rm -rf sdks-master sdks.tar.gz
+        curl -L "https://github.com/xybp888/iOS-SDKs/archive/refs/heads/master.tar.gz" -o /tmp/sdks.tar.gz
+        tar -xzf /tmp/sdks.tar.gz -C $THEOS/sdks --strip-components=1
+        rm /tmp/sdks.tar.gz
         ls -la $THEOS/sdks/
 
     - name: Build NewTerm
       run: |
-        make package FINALVERSION=1.0.0
+        export THEOS_PROJECT_DIR=$PWD
+        gmake package FINALVERSION=1.0.0
+        ls -la packages/
 
     - name: Upload Package
       uses: actions/upload-artifact@v4
       with:
         name: newterm-ios6
         path: packages/*.deb
-
-  release:
-    name: Create Release
-    runs-on: macos-latest
-    needs: build
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-    
-    steps:
-    - name: Download Artifacts
-      uses: actions/download-artifact@v4
-      with:
-        path: artifacts
-
-    - name: Create Release
-      uses: softprops/action-gh-release@v2
-      with:
-        files: artifacts/*/*.deb
-        body_path: RELEASE_NOTES.md
-        draft: true
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
