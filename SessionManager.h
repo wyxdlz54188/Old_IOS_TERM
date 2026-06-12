@@ -8,7 +8,7 @@
 @end
 
 @interface SessionManager : NSObject {
-    id<SessionManagerDelegate> _delegate;
+    __unsafe_unretained id<SessionManagerDelegate> _delegate;
     NSString *_host;
     NSInteger _port;
     BOOL _isConnected;

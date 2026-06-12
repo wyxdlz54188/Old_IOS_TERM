@@ -3,7 +3,7 @@
 @protocol PtySessionDelegate;
 
 @interface PtySession : NSObject {
-    id<PtySessionDelegate> _delegate;
+    __unsafe_unretained id<PtySessionDelegate> _delegate;
     int _masterFd;
     pid_t _pid;
     NSString *_shellPath;
