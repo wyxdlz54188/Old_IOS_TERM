@@ -9,14 +9,14 @@ on:
 jobs:
   build:
     name: Build NewTerm (iOS 6.0)
-    runs-on: macos-11
+    runs-on: macos-13
     
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Setup Theos
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         repository: theos/theos
         path: theos
@@ -42,20 +42,20 @@ jobs:
         make package FINALVERSION=1.0.0 IPHONEOS_DEPLOYMENT_TARGET=6.0
 
     - name: Upload Package
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: newterm-ios6
         path: packages/*.deb
 
   release:
     name: Create Release
-    runs-on: macos-11
+    runs-on: macos-13
     needs: build
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     
     steps:
     - name: Download Artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         path: artifacts
 
