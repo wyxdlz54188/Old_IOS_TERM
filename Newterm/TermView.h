@@ -4,7 +4,7 @@
 
 @class SessionManager;
 
-@interface TermView : UIScrollView <UIScrollViewDelegate, UITextFieldDelegate, SessionManagerDelegate> {
+@interface TermView : UIScrollView <UIScrollViewDelegate, UITextFieldDelegate, SessionManagerDelegate, VT100ParserDelegate> {
     VT100Parser *_parser;
     SessionManager *_sessionManager;
     UITextField *_hiddenInput;

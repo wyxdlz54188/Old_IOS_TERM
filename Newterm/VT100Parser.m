@@ -3,6 +3,7 @@
 @implementation VT100Parser
 
 @synthesize escapeBuffer = _escapeBuffer, inEscapeSequence = _inEscapeSequence;
+@synthesize delegate = _delegate;
 
 - (id)init {
     if ((self = [super init])) {
@@ -45,14 +46,13 @@
 }
 
 - (void)handleEscapeSequence:(NSString *)sequence {
-    if ([sequence isEqualToString:@"(null"]) {
-    } else if ([sequence hasPrefix:@"["]) {
-        if ([sequence isEqualToString:@"[H"]) {
-        } else if ([sequence isEqualToString:@"[J"]) {
-        } else if ([sequence hasPrefix:@"[A"]) {
-        } else if ([sequence hasPrefix:@"[B"]) {
-        } else if ([sequence hasPrefix:@"[C"]) {
-        } else if ([sequence hasPrefix:@"[D"]) {
+    if ([sequence isEqualToString:@"[H"]) {
+        if ([_delegate respondsToSelector:@selector(vt100MoveCursorToHome)]) {
+            [_delegate vt100MoveCursorToHome];
+        }
+    } else if ([sequence isEqualToString:@"[J"] || [sequence isEqualToString:@"[2J"]) {
+        if ([_delegate respondsToSelector:@selector(vt100ClearScreen)]) {
+            [_delegate vt100ClearScreen];
         }
     }
 }

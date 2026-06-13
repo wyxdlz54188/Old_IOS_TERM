@@ -29,6 +29,7 @@
         [_displayLines addObject:@""];
         
         _parser = [[VT100Parser alloc] init];
+        _parser.delegate = self;
         
         [self setupView];
         [self setupHiddenInput];
@@ -110,7 +111,6 @@
             [_displayLines addObject:line];
         }
         
-        // 自动换行：跳过 ANSI 序列计算实际长度
         while ([self visibleLengthOfLine:[_displayLines lastObject]] > _columns && _columns > 0) {
             NSString *longLine = [_displayLines lastObject];
             [_displayLines removeLastObject];
@@ -179,6 +179,7 @@
     [_displayLines removeAllObjects];
     [_displayLines addObject:@""];
     [_terminalBuffer setString:@""];
+    [self updateContentSize];
     [self setNeedsDisplay];
 }
 
@@ -192,7 +193,7 @@
     }
 }
 
-#pragma mark - 绘制（支持 ANSI 颜色）
+#pragma mark - 绘制
 
 - (void)drawRect:(CGRect)rect {
     CGContextRef ctx = UIGraphicsGetCurrentContext();
@@ -211,6 +212,12 @@
         NSString *line = [_displayLines objectAtIndex:i];
         CGFloat y = (i * _lineHeight) - self.contentOffset.y + 2;
         if (y + _lineHeight < 0 || y > self.frame.size.height) continue;
+        
+        if ([line rangeOfString:@"\x1B"].location == NSNotFound) {
+            [self.textColor setFill];
+            [line drawAtPoint:CGPointMake(5, y) withFont:_terminalFont];
+            continue;
+        }
         
         CGFloat x = 5;
         UIColor *currentColor = self.textColor;
@@ -249,7 +256,6 @@
         }
     }
     
-    // 光标
     if (_cursorVisible && [_displayLines count] > 0) {
         [[UIColor colorWithRed:0.0 green:1.0 blue:0.0 alpha:0.5] setFill];
         NSString *lastLine = [_displayLines lastObject];
@@ -279,6 +285,17 @@
     return self.textColor;
 }
 
+#pragma mark - VT100ParserDelegate
+
+- (void)vt100ClearScreen {
+    [self clearScreen];
+}
+
+- (void)vt100MoveCursorToHome {
+    [_displayLines addObject:@""];
+    [self setNeedsDisplay];
+}
+
 #pragma mark - 光标闪烁
 
 - (void)startCursorBlink {
@@ -304,7 +321,7 @@
     }
     
     if ([string isEqualToString:@""] && range.length > 0) {
-        [_sessionManager sendCommand:@"\b"];
+        [_sessionManager sendCommand:@"\x7f"];
         textField.text = @"";
         return NO;
     }
