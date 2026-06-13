@@ -1,12 +1,13 @@
 #import "SettingsViewController.h"
 
-@implementation SettingsViewController
+@implementation SettingsViewController {
+    UISlider *_fontSizeSlider;
+    UILabel *_fontSizeLabel;
+}
 
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.title = @"设置";
-    
-    // 普通白色背景
     self.view.backgroundColor = [UIColor whiteColor];
     
     // 右上角完成按钮
@@ -15,7 +16,7 @@
                                                                                 action:@selector(dismissSettings)];
     self.navigationItem.rightBarButtonItem = doneButton;
     
-    // 标题标签
+    // 标题
     UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 20, self.view.frame.size.width - 40, 30)];
     titleLabel.text = @"NewTerm 设置";
     titleLabel.font = [UIFont boldSystemFontOfSize:20.0];
@@ -23,14 +24,40 @@
     titleLabel.backgroundColor = [UIColor clearColor];
     [self.view addSubview:titleLabel];
     
-    // 信息标签
-    UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(20, 60, self.view.frame.size.width - 40, 200)];
-    label.text = @"字体: Courier 14pt\n\n颜色: 绿色终端\n\nShell: /bin/bash\n\n版本: 1.0.0";
+    // 字体大小标签
+    CGFloat currentSize = [[NSUserDefaults standardUserDefaults] floatForKey:@"terminalFontSize"];
+    if (currentSize < 8.0) currentSize = 14.0;
+    
+    _fontSizeLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 70, self.view.frame.size.width - 40, 30)];
+    _fontSizeLabel.text = [NSString stringWithFormat:@"字体大小: %.0fpt", currentSize];
+    _fontSizeLabel.font = [UIFont systemFontOfSize:16.0];
+    _fontSizeLabel.textColor = [UIColor darkGrayColor];
+    _fontSizeLabel.backgroundColor = [UIColor clearColor];
+    [self.view addSubview:_fontSizeLabel];
+    
+    // 滑块
+    _fontSizeSlider = [[UISlider alloc] initWithFrame:CGRectMake(20, 110, self.view.frame.size.width - 40, 30)];
+    _fontSizeSlider.minimumValue = 8.0;
+    _fontSizeSlider.maximumValue = 24.0;
+    _fontSizeSlider.value = currentSize;
+    [_fontSizeSlider addTarget:self action:@selector(fontSizeChanged:) forControlEvents:UIControlEventValueChanged];
+    [self.view addSubview:_fontSizeSlider];
+    
+    // 其他信息
+    UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(20, 160, self.view.frame.size.width - 40, 150)];
+    label.text = @"颜色: 绿色终端\n\nShell: /bin/bash\n\n版本: 1.0.0";
     label.numberOfLines = 0;
-    label.font = [UIFont systemFontOfSize:16.0];
-    label.textColor = [UIColor darkGrayColor];
+    label.font = [UIFont systemFontOfSize:14.0];
+    label.textColor = [UIColor grayColor];
     label.backgroundColor = [UIColor clearColor];
     [self.view addSubview:label];
+}
+
+- (void)fontSizeChanged:(UISlider *)slider {
+    CGFloat size = roundf(slider.value);
+    _fontSizeLabel.text = [NSString stringWithFormat:@"字体大小: %.0fpt", size];
+    [[NSUserDefaults standardUserDefaults] setFloat:size forKey:@"terminalFontSize"];
+    [[NSUserDefaults standardUserDefaults] synchronize];
 }
 
 - (void)dismissSettings {

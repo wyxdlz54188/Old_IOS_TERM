@@ -11,9 +11,11 @@
         self.backgroundColor = [UIColor colorWithRed:0.0 green:0.0 blue:0.0 alpha:1.0];
         self.textColor = [UIColor colorWithRed:0.0 green:1.0 blue:0.0 alpha:1.0];
         
-        _terminalFont = [UIFont fontWithName:@"Courier" size:14.0];
-        _lineHeight = 18.0;
-        _charWidth = 8.0;
+        CGFloat fontSize = [[NSUserDefaults standardUserDefaults] floatForKey:@"terminalFontSize"];
+        if (fontSize < 8.0) fontSize = 14.0;
+        _terminalFont = [UIFont fontWithName:@"Courier" size:fontSize];
+        _lineHeight = fontSize + 4.0;
+        _charWidth = fontSize * 0.6;
         _columns = 80;
         _rows = 24;
         _cursorVisible = YES;
@@ -28,6 +30,11 @@
         [self setupHiddenInput];
         [self setupTapGesture];
         [self startCursorBlink];
+        
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(fontSizeDidChange:)
+                                                     name:NSUserDefaultsDidChangeNotification
+                                                   object:nil];
     }
     return self;
 }
@@ -71,6 +78,8 @@
     _rows = (NSInteger)(self.frame.size.height / _lineHeight);
     self.contentSize = CGSizeMake(self.frame.size.width, MAX(_rows, [_displayLines count]) * _lineHeight + 100);
 }
+
+#pragma mark - 文本处理
 
 - (void)appendText:(NSString *)text {
     if (!text || [text length] == 0) return;
@@ -130,6 +139,8 @@
     }
 }
 
+#pragma mark - 绘制
+
 - (void)drawRect:(CGRect)rect {
     CGContextRef ctx = UIGraphicsGetCurrentContext();
     
@@ -163,6 +174,8 @@
     }
 }
 
+#pragma mark - 光标闪烁
+
 - (void)startCursorBlink {
     [NSTimer scheduledTimerWithTimeInterval:0.5
                                      target:self
@@ -175,6 +188,8 @@
     _cursorVisible = !_cursorVisible;
     [self setNeedsDisplay];
 }
+
+#pragma mark - UITextFieldDelegate
 
 - (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string {
     if ([string isEqualToString:@"\n"]) {
@@ -198,6 +213,8 @@
     return YES;
 }
 
+#pragma mark - SessionManagerDelegate
+
 - (void)sessionDidConnect {
     [_hiddenInput becomeFirstResponder];
 }
@@ -217,6 +234,19 @@
 
 - (void)session:(id)session didFailWithError:(NSError *)error {
     [self appendText:[NSString stringWithFormat:@"\n[Error: %@]\n", [error localizedDescription]]];
+}
+
+#pragma mark - 字体大小变化
+
+- (void)fontSizeDidChange:(NSNotification *)notification {
+    CGFloat fontSize = [[NSUserDefaults standardUserDefaults] floatForKey:@"terminalFontSize"];
+    if (fontSize < 8.0) fontSize = 14.0;
+    _terminalFont = [UIFont fontWithName:@"Courier" size:fontSize];
+    _lineHeight = fontSize + 4.0;
+    _charWidth = fontSize * 0.6;
+    _columns = (NSInteger)(self.frame.size.width / _charWidth) - 1;
+    _rows = (NSInteger)(self.frame.size.height / _lineHeight);
+    [self setNeedsDisplay];
 }
 
 @end
