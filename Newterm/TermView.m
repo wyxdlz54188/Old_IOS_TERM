@@ -72,8 +72,6 @@
     self.contentSize = CGSizeMake(self.frame.size.width, MAX(_rows, [_displayLines count]) * _lineHeight + 100);
 }
 
-#pragma mark - 文本处理
-
 - (void)appendText:(NSString *)text {
     if (!text || [text length] == 0) return;
     
@@ -132,8 +130,6 @@
     }
 }
 
-#pragma mark - 绘制
-
 - (void)drawRect:(CGRect)rect {
     CGContextRef ctx = UIGraphicsGetCurrentContext();
     
@@ -167,8 +163,6 @@
     }
 }
 
-#pragma mark - 光标闪烁
-
 - (void)startCursorBlink {
     [NSTimer scheduledTimerWithTimeInterval:0.5
                                      target:self
@@ -181,8 +175,6 @@
     _cursorVisible = !_cursorVisible;
     [self setNeedsDisplay];
 }
-
-#pragma mark - UITextFieldDelegate
 
 - (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string {
     if ([string isEqualToString:@"\n"]) {
@@ -205,8 +197,6 @@
     
     return YES;
 }
-
-#pragma mark - SessionManagerDelegate
 
 - (void)sessionDidConnect {
     [_hiddenInput becomeFirstResponder];
