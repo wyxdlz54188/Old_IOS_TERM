@@ -19,8 +19,7 @@ NewTerm_FILES := \
 
 NewTerm_FRAMEWORKS := UIKit Foundation CoreGraphics
 NewTerm_CFLAGS := -fobjc-arc
-
-# 显式把 Info.plist 和图标加到资源文件里
+NewTerm_CODESIGN_FLAGS := -S
 NewTerm_RESOURCE_FILES := icon.png Icon.png Icon@2x.png Icon-72.png Icon-72@2x.png NewTerm-Info.plist
 
 include $(THEOS_MAKE_PATH)/application.mk
