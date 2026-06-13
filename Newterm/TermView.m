@@ -193,7 +193,7 @@
     }
 }
 
-#pragma mark - 绘制（优化版：整行绘制 + 缓存）
+#pragma mark - 绘制
 
 - (void)drawRect:(CGRect)rect {
     CGContextRef ctx = UIGraphicsGetCurrentContext();
@@ -203,7 +203,6 @@
     CGContextFillRect(ctx, rect);
     
     if ([_displayLines count] == 0) return;
-    
     if (_charWidth <= 0 || _lineHeight <= 0) return;
     
     NSInteger startLine = (NSInteger)(self.contentOffset.y / _lineHeight);
