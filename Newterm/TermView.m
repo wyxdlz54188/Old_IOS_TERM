@@ -1,9 +1,9 @@
 #import "TermView.h"
-#import "SessionManager.h"
+#import "TerminalSession.h"
 
 @implementation TermView
 
-@synthesize sessionManager = _sessionManager, textColor = _textColor;
+@synthesize session = _session, textColor = _textColor;
 @synthesize backgroundColor = _backgroundColor, cursorVisible = _cursorVisible;
 
 - (id)initWithFrame:(CGRect)frame {
@@ -24,14 +24,10 @@
         _rows = 24;
         _cursorVisible = YES;
         
-        _terminalBuffer = [[NSMutableString alloc] init];
         _displayLines = [[NSMutableArray alloc] init];
         [_displayLines addObject:@""];
         
-        _parser = [[VT100Parser alloc] init];
-        _parser.delegate = self;
-        
-        // UIScrollView 配置（iOS 6 兼容）
+        // UIScrollView 配置
         self.scrollEnabled = YES;
         self.bounces = YES;
         self.alwaysBounceVertical = YES;
@@ -112,8 +108,8 @@
 - (void)appendText:(NSString *)text {
     if (!text || [text length] == 0) return;
     
-    NSString *parsed = [_parser parseInput:text];
-    if (!parsed) parsed = text;
+    // 简单的 VT100 解析 - 移除转义序列
+    NSString *parsed = [self parseSimpleVT100:text];
     
     parsed = [parsed stringByReplacingOccurrencesOfString:@"\r" withString:@""];
     
@@ -150,6 +146,25 @@
     [self updateContentSize];
     [self scrollToBottom];
     [self setNeedsDisplay];
+}
+
+- (NSString *)parseSimpleVT100:(NSString *)input {
+    // 简化的 VT100 解析 - 移除 ANSI 转义序列
+    NSString *result = input;
+    NSRange escRange = [result rangeOfString:@"\x1B["];
+    while (escRange.location != NSNotFound) {
+        NSRange endRange = [result rangeOfCharacterFromSet:[NSCharacterSet characterSetWithCharactersInString:@"@~muyHJfABCDps"]
+                                                   options:0
+                                                     range:NSMakeRange(escRange.location, result.length - escRange.location)];
+        if (endRange.location != NSNotFound) {
+            NSString *toRemove = [result substringWithRange:NSMakeRange(escRange.location, endRange.location + endRange.length - escRange.location)];
+            result = [result stringByReplacingOccurrencesOfString:toRemove withString:@""];
+        } else {
+            break;
+        }
+        escRange = [result rangeOfString:@"\x1B["];
+    }
+    return result;
 }
 
 - (NSInteger)visibleLengthOfLine:(NSString *)line {
@@ -198,7 +213,6 @@
 - (void)clearScreen {
     [_displayLines removeAllObjects];
     [_displayLines addObject:@""];
-    [_terminalBuffer setString:@""];
     [self updateContentSize];
     [self scrollToBottom];
     [self setNeedsDisplay];
@@ -213,7 +227,7 @@
 #pragma mark - 滚动控制
 
 - (void)scrollToBottom {
-    CGFloat bottomY = self.contentSize.height - self.frame.size.height + self.contentInset.bottom;
+    CGFloat bottomY = self.contentSize.height - self.frame.size.height + _kbHeight;
     if (bottomY < 0) bottomY = 0;
     
     CGPoint offset = CGPointMake(0, bottomY);
@@ -317,17 +331,6 @@
     return self.textColor;
 }
 
-#pragma mark - VT100ParserDelegate
-
-- (void)vt100ClearScreen {
-    [self clearScreen];
-}
-
-- (void)vt100MoveCursorToHome {
-    [_displayLines addObject:@""];
-    [self setNeedsDisplay];
-}
-
 #pragma mark - 光标闪烁
 
 - (void)startCursorBlink {
@@ -348,25 +351,24 @@
 
 - (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string {
     if ([string length] == 0 && range.length > 0) {
-        // 退格键 - 删除光标前的字符
-        unsigned char backspace = 0x08;
-        NSData *data = [NSData dataWithBytes:&backspace length:1];
-        [_sessionManager sendData:data];
+        // 退格键
+        if (_session) {
+            [_session sendKeyBackspace];
+        }
         return NO;
     }
     
     if ([string length] == 0 && range.length == 0) {
-        // 删除键 - 有时也会触发这种情况
-        unsigned char del = 0x7F;
-        NSData *data = [NSData dataWithBytes:&del length:1];
-        [_sessionManager sendData:data];
+        // 删除键
+        if (_session) {
+            [_session sendKeyDelete];
+        }
         return NO;
     }
     
     if ([string length] > 0) {
-        NSData *data = [string dataUsingEncoding:NSUTF8StringEncoding];
-        if (data) {
-            [_sessionManager sendData:data];
+        if (_session) {
+            [_session sendString:string];
         }
     }
     return NO;
@@ -380,8 +382,10 @@
     CGRect keyboardFrame = [keyboardFrameValue CGRectValue];
     NSTimeInterval duration = [[info valueForKey:UIKeyboardAnimationDurationUserInfoKey] doubleValue];
     
+    _kbHeight = keyboardFrame.size.height;
+    
     UIEdgeInsets contentInset = self.contentInset;
-    contentInset.bottom = keyboardFrame.size.height;
+    contentInset.bottom = _kbHeight;
     self.contentInset = contentInset;
     self.scrollIndicatorInsets = contentInset;
     
@@ -394,6 +398,8 @@
     NSDictionary *info = [notification userInfo];
     NSTimeInterval duration = [[info valueForKey:UIKeyboardAnimationDurationUserInfoKey] doubleValue];
     
+    _kbHeight = 0;
+    
     UIEdgeInsets contentInset = self.contentInset;
     contentInset.bottom = 0;
     self.contentInset = contentInset;
@@ -404,17 +410,17 @@
     }];
 }
 
-#pragma mark - SessionManagerDelegate
+#pragma mark - TerminalSessionDelegate
 
-- (void)sessionDidConnect {
+- (void)sessionDidConnect:(TerminalSession *)session {
     [_hiddenInput becomeFirstResponder];
 }
 
-- (void)sessionDidDisconnect {
+- (void)sessionDidDisconnect:(TerminalSession *)session {
     [self appendText:@"\n[Disconnected]\n"];
 }
 
-- (void)session:(id)session didReceiveData:(NSData *)data {
+- (void)session:(TerminalSession *)session didReceiveData:(NSData *)data {
     NSString *text = [[NSString alloc] initWithBytes:[data bytes]
                                               length:[data length]
                                             encoding:NSUTF8StringEncoding];
@@ -423,7 +429,7 @@
     }
 }
 
-- (void)session:(id)session didFailWithError:(NSError *)error {
+- (void)session:(TerminalSession *)session didFailWithError:(NSError *)error {
     [self appendText:[NSString stringWithFormat:@"\n[Error: %@]\n", [error localizedDescription]]];
 }
 

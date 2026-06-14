@@ -1,14 +1,9 @@
 #import <UIKit/UIKit.h>
-#import "VT100Parser.h"
-#import "SessionManager.h"
+#import "TerminalSession.h"
 
-@class SessionManager;
-
-@interface TermView : UIScrollView <UIScrollViewDelegate, UITextFieldDelegate, SessionManagerDelegate, VT100ParserDelegate> {
-    VT100Parser *_parser;
-    SessionManager *_sessionManager;
+@interface TermView : UIScrollView <UIScrollViewDelegate, UITextFieldDelegate, TerminalSessionDelegate> {
+    TerminalSession *_session;
     UITextField *_hiddenInput;
-    NSMutableString *_terminalBuffer;
     NSMutableArray *_displayLines;
     UIFont *_terminalFont;
     CGFloat _lineHeight;
@@ -17,9 +12,10 @@
     NSInteger _rows;
     BOOL _cursorVisible;
     NSTimer *_cursorBlinkTimer;
+    CGFloat _kbHeight;
 }
 
-@property (nonatomic, retain) SessionManager *sessionManager;
+@property (nonatomic, retain) TerminalSession *session;
 @property (nonatomic, retain) UIColor *textColor;
 @property (nonatomic, retain) UIColor *backgroundColor;
 @property (nonatomic, assign) BOOL cursorVisible;

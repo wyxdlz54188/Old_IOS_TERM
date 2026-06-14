@@ -1,11 +1,11 @@
 #import <UIKit/UIKit.h>
 
 @class TermView;
-@class SessionManager;
+@class TerminalSession;
 
 @interface TermViewController : UIViewController {
     TermView *_termView;
-    SessionManager *_sessionManager;
+    TerminalSession *_session;
     UIToolbar *_toolbar;
     UIBarButtonItem *_newTabButton;
     UIBarButtonItem *_settingsButton;
@@ -14,11 +14,11 @@
 }
 
 @property (nonatomic, retain) TermView *termView;
-@property (nonatomic, retain) SessionManager *sessionManager;
+@property (nonatomic, retain) TerminalSession *session;
 @property (nonatomic, retain) UIToolbar *toolbar;
-@property (nonatomic, retain, getter=getNewButton) UIBarButtonItem *newTabButton;
-@property (nonatomic, retain, getter=getSettingsBtn) UIBarButtonItem *settingsButton;
-@property (nonatomic, retain, getter=getCopyBtn) UIBarButtonItem *copyButton;
+@property (nonatomic, retain) UIBarButtonItem *newTabButton;
+@property (nonatomic, retain) UIBarButtonItem *settingsButton;
+@property (nonatomic, retain) UIBarButtonItem *copyButton;
 @property (nonatomic, assign) BOOL isConnected;
 
 - (void)newTerminalSession;

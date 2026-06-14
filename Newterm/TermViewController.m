@@ -1,11 +1,11 @@
 #import "TermViewController.h"
 #import "TermView.h"
-#import "SessionManager.h"
+#import "TerminalSession.h"
 #import "SettingsViewController.h"
 
 @implementation TermViewController
 
-@synthesize termView = _termView, sessionManager = _sessionManager;
+@synthesize termView = _termView, session = _session;
 @synthesize toolbar = _toolbar, isConnected = _isConnected;
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
@@ -19,17 +19,16 @@
     [super viewDidLoad];
     self.title = @"NewTerm";
     
-    self.sessionManager = [[SessionManager alloc] init];
+    self.session = [[TerminalSession alloc] init];
     
-    // 🔥 关键：termView 的 frame 要留出 toolbar 的空间
     CGFloat toolbarHeight = 44.0;
     CGRect terminalFrame = CGRectMake(0, 0, self.view.frame.size.width,
                                        self.view.frame.size.height - toolbarHeight);
     
     self.termView = [[TermView alloc] initWithFrame:terminalFrame];
     self.termView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-    self.termView.sessionManager = self.sessionManager;
-    self.sessionManager.delegate = self.termView;
+    self.termView.session = self.session;
+    self.session.delegate = self.termView;
     [self.view addSubview:self.termView];
     
     [self setupToolbar];
@@ -43,7 +42,7 @@
 - (void)viewDidUnload {
     [super viewDidUnload];
     self.termView = nil;
-    self.sessionManager = nil;
+    self.session = nil;
 }
 
 - (void)setupToolbar {
@@ -78,7 +77,7 @@
 
 - (void)newTerminalSession {
     if (!self.isConnected) {
-        [self.sessionManager connectToHost:@"localhost" port:22];
+        [self.session connectToLocalShell];
         self.isConnected = YES;
     }
 }
@@ -94,7 +93,7 @@
                                                          message:@"请通过点击终端区域后选择文本来复制"
                                                         delegate:nil
                                                cancelButtonTitle:@"确定"
-                                                otherButtonTitles:nil];
+                                               otherButtonTitles:nil];
     [alertView show];
 }
 
