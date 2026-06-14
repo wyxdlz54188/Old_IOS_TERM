@@ -1,6 +1,5 @@
 #import "TermView.h"
 #import "SessionManager.h"
-#import <QuartzCore/QuartzCore.h>
 
 @implementation TermView
 
@@ -148,12 +147,9 @@
         [_displayLines removeObjectAtIndex:0];
     }
     
-    [CATransaction begin];
-    [CATransaction setDisableActions:YES];
     [self updateContentSize];
     [self scrollToBottom];
     [self setNeedsDisplay];
-    [CATransaction commit];
 }
 
 - (NSInteger)visibleLengthOfLine:(NSString *)line {
