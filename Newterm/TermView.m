@@ -81,13 +81,21 @@
 
 - (void)layoutSubviews {
     [super layoutSubviews];
+    
+    NSInteger oldColumns = _columns;
+    NSInteger oldRows = _rows;
+    
     if (_charWidth > 0) {
         _columns = (NSInteger)(self.frame.size.width / _charWidth) - 1;
     }
     if (_lineHeight > 0) {
         _rows = (NSInteger)(self.frame.size.height / _lineHeight);
     }
-    [self updateContentSize];
+    
+    if (_columns != oldColumns || _rows != oldRows) {
+        [self updateContentSize];
+        [self setNeedsDisplay];
+    }
 }
 
 #pragma mark - 文本处理
@@ -171,8 +179,8 @@
             continue;
         }
         visible++;
-        if (visible > column) {
-            return i;
+        if (visible >= column) {
+            return i + 1;
         }
     }
     return [line length];
@@ -218,10 +226,12 @@
     if (endLine > [_displayLines count]) endLine = [_displayLines count];
     if (startLine < 0) startLine = 0;
     
+    CGRect visibleRect = self.bounds;
+    
     for (NSInteger i = startLine; i < endLine; i++) {
         NSString *line = [_displayLines objectAtIndex:i];
         CGFloat y = (i * _lineHeight) + 2;
-        if (y + _lineHeight < self.contentOffset.y || y > self.contentOffset.y + self.frame.size.height) continue;
+        if (y + _lineHeight < visibleRect.origin.y || y > visibleRect.origin.y + visibleRect.size.height) continue;
         
         if ([line rangeOfString:@"\x1B"].location == NSNotFound) {
             [self.textColor setFill];
@@ -272,7 +282,7 @@
         CGFloat cursorX = 5 + (visibleLen % MAX(1, _columns)) * _charWidth;
         CGFloat cursorY = (([_displayLines count] - 1) * _lineHeight) + 2;
         
-        if (cursorY >= self.contentOffset.y && cursorY < self.contentOffset.y + self.frame.size.height) {
+        if (cursorY >= visibleRect.origin.y && cursorY < visibleRect.origin.y + visibleRect.size.height) {
             CGContextFillRect(ctx, CGRectMake(cursorX, cursorY, _charWidth, _lineHeight));
         }
     }
@@ -308,11 +318,12 @@
 #pragma mark - 光标闪烁
 
 - (void)startCursorBlink {
-    [NSTimer scheduledTimerWithTimeInterval:0.5
-                                     target:self
-                                   selector:@selector(toggleCursor)
-                                   userInfo:nil
-                                    repeats:YES];
+    _cursorBlinkTimer = [NSTimer scheduledTimerWithTimeInterval:0.5
+                                                         target:self
+                                                       selector:@selector(toggleCursor)
+                                                       userInfo:nil
+                                                        repeats:YES];
+    [[NSRunLoop currentRunLoop] addTimer:_cursorBlinkTimer forMode:NSRunLoopCommonModes];
 }
 
 - (void)toggleCursor {
@@ -323,16 +334,18 @@
 #pragma mark - UITextFieldDelegate
 
 - (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string {
-    if ([string length] == 0) {
+    if ([string length] == 0 && range.length > 0) {
         unsigned char del = 0x7F;
         NSData *data = [NSData dataWithBytes:&del length:1];
         [_sessionManager sendData:data];
-        return NO;
+        return YES;
     }
     
-    NSData *data = [string dataUsingEncoding:NSUTF8StringEncoding];
-    if (data) {
-        [_sessionManager sendData:data];
+    if ([string length] > 0) {
+        NSData *data = [string dataUsingEncoding:NSUTF8StringEncoding];
+        if (data) {
+            [_sessionManager sendData:data];
+        }
     }
     return NO;
 }
@@ -369,6 +382,8 @@
     
     NSString *testChar = @"W";
     CGSize charSize = [testChar sizeWithFont:_terminalFont];
+    CGFloat oldCharWidth = _charWidth;
+    CGFloat oldLineHeight = _lineHeight;
     _charWidth = charSize.width;
     _lineHeight = charSize.height + 2.0;
     
@@ -378,8 +393,19 @@
     if (_lineHeight > 0) {
         _rows = (NSInteger)(self.frame.size.height / _lineHeight);
     }
-    [self updateContentSize];
-    [self setNeedsDisplay];
+    
+    if (_charWidth != oldCharWidth || _lineHeight != oldLineHeight) {
+        [self updateContentSize];
+        [self setNeedsDisplay];
+    }
+}
+
+- (void)dealloc {
+    if (_cursorBlinkTimer) {
+        [_cursorBlinkTimer invalidate];
+        _cursorBlinkTimer = nil;
+    }
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 @end

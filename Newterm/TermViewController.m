@@ -90,25 +90,12 @@
 }
 
 - (void)copyTerminalText {
-    UIPasteboard *pb = [UIPasteboard generalPasteboard];
-    pb.string = @"Terminal text copied";
-    
-    UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"已复制"
-                                                         message:@"终端文本已复制到剪贴板"
+    UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"提示"
+                                                         message:@"请通过点击终端区域后选择文本来复制"
                                                         delegate:nil
                                                cancelButtonTitle:@"确定"
-                                               otherButtonTitles:nil];
+                                                otherButtonTitles:nil];
     [alertView show];
-}
-
-- (void)pasteToTerminal {
-    NSString *text = [UIPasteboard generalPasteboard].string;
-    if (text) {
-        NSData *pasteData = [text dataUsingEncoding:NSUTF8StringEncoding];
-        if (pasteData) {
-            [self.sessionManager sendData:pasteData];
-        }
-    }
 }
 
 @end

@@ -77,18 +77,22 @@
         return;
     }
     
-    char buffer[4096];
-    ssize_t bytesRead = read(_ptyFd, buffer, sizeof(buffer));
-    
-    if (bytesRead > 0) {
-        NSData *data = [NSData dataWithBytes:buffer length:bytesRead];
-        if ([_delegate respondsToSelector:@selector(session:didReceiveData:)]) {
-            [_delegate session:self didReceiveData:data];
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        char buffer[4096];
+        ssize_t bytesRead = read(self->_ptyFd, buffer, sizeof(buffer));
+        
+        if (bytesRead > 0) {
+            NSData *data = [NSData dataWithBytes:buffer length:bytesRead];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if ([self->_delegate respondsToSelector:@selector(session:didReceiveData:)]) {
+                    [self->_delegate session:self didReceiveData:data];
+                }
+            });
         }
-    }
-    
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.01 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-        [self startReadingPTY];
+        
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.01 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+            [self startReadingPTY];
+        });
     });
 }
 

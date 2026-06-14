@@ -16,6 +16,7 @@
     NSInteger _columns;
     NSInteger _rows;
     BOOL _cursorVisible;
+    NSTimer *_cursorBlinkTimer;
 }
 
 @property (nonatomic, retain) SessionManager *sessionManager;
