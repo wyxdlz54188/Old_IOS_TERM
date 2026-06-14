@@ -2,13 +2,13 @@
 
 @implementation AlertHelper
 
-+ (void)showAlertWithTitle:(NSString *)title
+ (void)showAlertWithTitle:(NSString *)title
                    message:(NSString *)message
             viewController:(UIViewController *)vc {
     [self showAlertWithTitle:title message:message viewController:vc okHandler:nil];
 }
 
-+ (void)showAlertWithTitle:(NSString *)title
+ (void)showAlertWithTitle:(NSString *)title
                    message:(NSString *)message
             viewController:(UIViewController *)vc
                 okHandler:(void(^)(void))okHandler {
