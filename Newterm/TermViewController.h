@@ -24,6 +24,5 @@
 - (void)newTerminalSession;
 - (void)showSettings;
 - (void)copyTerminalText;
-- (void)pasteToTerminal;
 
 @end
