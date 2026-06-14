@@ -347,10 +347,20 @@
 #pragma mark - UITextFieldDelegate
 
 - (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string {
-    if ([string length] == 0) {
+    if ([string length] == 0 && range.length > 0) {
+        // 退格键 - 删除光标前的字符
+        unsigned char backspace = 0x08;
+        NSData *data = [NSData dataWithBytes:&backspace length:1];
+        [_sessionManager sendData:data];
+        return NO;
+    }
+    
+    if ([string length] == 0 && range.length == 0) {
+        // 删除键 - 有时也会触发这种情况
         unsigned char del = 0x7F;
         NSData *data = [NSData dataWithBytes:&del length:1];
         [_sessionManager sendData:data];
+        return NO;
     }
     
     if ([string length] > 0) {
