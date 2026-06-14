@@ -53,16 +53,16 @@
     self.toolbar = [[UIToolbar alloc] initWithFrame:toolbarFrame];
     self.toolbar.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleTopMargin;
     
-    self.newTabButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd
+    UIBarButtonItem *newTabButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd
                                                                         target:self
                                                                         action:@selector(newTerminalSession)];
     
-    self.settingsButton = [[UIBarButtonItem alloc] initWithTitle:@"设置"
+    UIBarButtonItem *settingsButton = [[UIBarButtonItem alloc] initWithTitle:@"设置"
                                                             style:UIBarButtonItemStyleBordered
                                                            target:self
                                                            action:@selector(showSettings)];
     
-    self.copyButton = [[UIBarButtonItem alloc] initWithTitle:@"复制"
+    UIBarButtonItem *copyButton = [[UIBarButtonItem alloc] initWithTitle:@"复制"
                                                         style:UIBarButtonItemStyleBordered
                                                        target:self
                                                        action:@selector(copyTerminalText)];
@@ -71,7 +71,7 @@
                                        initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace
                                        target:nil action:nil];
     
-    self.toolbar.items = @[self.newTabButton, flexibleSpace, self.copyButton, flexibleSpace, self.settingsButton];
+    self.toolbar.items = @[newTabButton, flexibleSpace, copyButton, flexibleSpace, settingsButton];
     [self.view addSubview:self.toolbar];
 }
 
