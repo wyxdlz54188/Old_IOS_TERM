@@ -1,33 +1,37 @@
 #import <UIKit/UIKit.h>
 #import "AlertHelper.h"
 
-@class UIAlertController;
-@class UIAlertAction;
-
 @implementation AlertHelper
 
-- (void)showAlertWithTitle:(NSString *)title
++ (void)showAlertWithTitle:(NSString *)title
                    message:(NSString *)message
             viewController:(UIViewController *)vc {
+    // 默认无回调
     [self showAlertWithTitle:title message:message viewController:vc okHandler:nil];
 }
 
-- (void)showAlertWithTitle:(NSString *)title
++ (void)showAlertWithTitle:(NSString *)title
                    message:(NSString *)message
             viewController:(UIViewController *)vc
                 okHandler:(void(^)(void))okHandler {
-    // iOS 8+ 使用 UIAlertController
-    if ([UIAlertController class]) {
-        UIAlertController *alert = [UIAlertController alertControllerWithTitle:title
-                                                                       message:message
-                                                                preferredStyle:UIAlertControllerStyleAlert];
-        UIAlertAction *ok = [UIAlertAction actionWithTitle:NSLocalizedString(@"OK", nil)
-                                                   style:UIAlertActionStyleDefault
-                                                 handler:^(UIAlertAction * _Nonnull action) {
+    // 使用运行时判断是否存在 UIAlertController（iOS 8+）
+    Class AlertControllerClass = NSClassFromString(@"UIAlertController");
+    Class AlertActionClass = NSClassFromString(@"UIAlertAction");
+    if (AlertControllerClass && AlertActionClass) {
+        // 创建 UIAlertController
+        id alert = [AlertControllerClass alertControllerWithTitle:title
+                                                          message:message
+                                                   preferredStyle:0]; // UIAlertControllerStyleAlert = 0
+        // 创建 OK 按钮
+        id ok = [AlertActionClass actionWithTitle:NSLocalizedString(@"OK", nil)
+                                            style:0 // UIAlertActionStyleDefault = 0
+                                          handler:^(id _Nonnull action) {
             if (okHandler) okHandler();
         }];
+        // 添加按钮并展示
         [alert addAction:ok];
-        [vc presentViewController:alert animated:YES completion:nil];
+        // UIAlertController 直接继承自 UIViewController，安全地做强制转型
+        [vc presentViewController:(UIViewController *)alert animated:YES completion:nil];
     } else {
         // iOS 6/7 使用 UIAlertView（已废弃）
         #pragma clang diagnostic push
@@ -39,10 +43,8 @@
                                               otherButtonTitles:nil];
         [alert show];
         #pragma clang diagnostic pop
-        if (okHandler) {
-            // UIAlertView 没有回调，直接调用
-            okHandler();
-        }
+        // UIAlertView 没有回调，手动调用
+        if (okHandler) okHandler();
     }
 }
 
