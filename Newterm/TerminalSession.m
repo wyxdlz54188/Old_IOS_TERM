@@ -17,7 +17,7 @@
 
 @implementation TerminalSession
 
-@synthesize delegate, isConnected = _isConnected, ptyFD = _ptyFD, processID = _childPid;
+@synthesize delegate = _delegate, isConnected = _isConnected, ptyFD = _ptyFD, processID = _childPid;
 
 - (void)connectToLocalShell {
     struct winsize win = {
