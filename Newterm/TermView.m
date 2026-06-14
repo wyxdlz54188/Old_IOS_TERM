@@ -1,5 +1,6 @@
 #import "TermView.h"
 #import "SessionManager.h"
+#import <QuartzCore/QuartzCore.h>
 
 @implementation TermView
 
@@ -147,9 +148,12 @@
         [_displayLines removeObjectAtIndex:0];
     }
     
+    [CATransaction begin];
+    [CATransaction setDisableActions:YES];
     [self updateContentSize];
     [self scrollToBottom];
     [self setNeedsDisplay];
+    [CATransaction commit];
 }
 
 - (NSInteger)visibleLengthOfLine:(NSString *)line {
@@ -213,9 +217,13 @@
 #pragma mark - 滚动控制
 
 - (void)scrollToBottom {
-    CGFloat bottomY = self.contentSize.height - self.frame.size.height;
+    CGFloat bottomY = self.contentSize.height - self.frame.size.height + self.contentInset.bottom;
     if (bottomY < 0) bottomY = 0;
-    [self setContentOffset:CGPointMake(0, bottomY) animated:NO];
+    
+    CGPoint offset = CGPointMake(0, bottomY);
+    if (!CGPointEqualToPoint(offset, self.contentOffset)) {
+        [self setContentOffset:offset animated:NO];
+    }
 }
 
 #pragma mark - 绘制
