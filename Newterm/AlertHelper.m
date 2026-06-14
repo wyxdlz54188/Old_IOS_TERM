@@ -1,6 +1,9 @@
 #import <UIKit/UIKit.h>
 #import "AlertHelper.h"
 
+@class UIAlertController;
+@class UIAlertAction;
+
 @implementation AlertHelper
 
 - (void)showAlertWithTitle:(NSString *)title
