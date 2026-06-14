@@ -64,6 +64,15 @@
     _hiddenInput.delegate = self;
     _hiddenInput.hidden = YES;
     [self addSubview:_hiddenInput];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(keyboardWillShow:)
+                                                 name:UIKeyboardWillShowNotification
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(keyboardWillHide:)
+                                                 name:UIKeyboardWillHideNotification
+                                               object:nil];
 }
 
 - (void)setupTapGesture {
@@ -334,11 +343,10 @@
 #pragma mark - UITextFieldDelegate
 
 - (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string {
-    if ([string length] == 0 && range.length > 0) {
+    if ([string length] == 0) {
         unsigned char del = 0x7F;
         NSData *data = [NSData dataWithBytes:&del length:1];
         [_sessionManager sendData:data];
-        return YES;
     }
     
     if ([string length] > 0) {
@@ -348,6 +356,38 @@
         }
     }
     return NO;
+}
+
+#pragma mark - 键盘通知
+
+- (void)keyboardWillShow:(NSNotification *)notification {
+    NSDictionary *info = [notification userInfo];
+    NSValue *keyboardFrameValue = [info valueForKey:UIKeyboardFrameEndUserInfoKey];
+    CGRect keyboardFrame = [keyboardFrameValue CGRectValue];
+    NSTimeInterval duration = [[info valueForKey:UIKeyboardAnimationDurationUserInfoKey] doubleValue];
+    
+    UIEdgeInsets contentInset = self.contentInset;
+    contentInset.bottom = keyboardFrame.size.height;
+    self.contentInset = contentInset;
+    self.scrollIndicatorInsets = contentInset;
+    
+    [UIView animateWithDuration:duration animations:^{
+        [self scrollToBottom];
+    }];
+}
+
+- (void)keyboardWillHide:(NSNotification *)notification {
+    NSDictionary *info = [notification userInfo];
+    NSTimeInterval duration = [[info valueForKey:UIKeyboardAnimationDurationUserInfoKey] doubleValue];
+    
+    UIEdgeInsets contentInset = self.contentInset;
+    contentInset.bottom = 0;
+    self.contentInset = contentInset;
+    self.scrollIndicatorInsets = contentInset;
+    
+    [UIView animateWithDuration:duration animations:^{
+        [self scrollToBottom];
+    }];
 }
 
 #pragma mark - SessionManagerDelegate
