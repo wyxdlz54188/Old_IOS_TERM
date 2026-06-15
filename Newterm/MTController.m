@@ -199,11 +199,11 @@ static NSString* getTitle(VT100* terminal) {
   }
   unsigned int cv;
   struct {
-    BOOL screen:1;
-    BOOL bgDefault:1;
-    BOOL fgDefault:1;
-    BOOL darkBG:1;
-    BOOL ctFont:1;
+    unsigned int screen:1;
+    unsigned int bgDefault:1;
+    unsigned int fgDefault:1;
+    unsigned int darkBG:1;
+    unsigned int ctFont:1;
   } changed={0};
   if(keys.palette){
     const unsigned int xterm16[]={
@@ -415,7 +415,7 @@ static NSString* getTitle(VT100* terminal) {
   return YES;
 }
 -(UIKeyboardAppearance)keyboardAppearance {
-  return darkBG?UIKeyboardAppearanceDark:UIKeyboardAppearanceDefault;
+  return darkBG?UIKeyboardAppearanceAlert:UIKeyboardAppearanceDefault;
 }
 -(UITextAutocapitalizationType)autocapitalizationType {
   return UITextAutocapitalizationTypeNone;
