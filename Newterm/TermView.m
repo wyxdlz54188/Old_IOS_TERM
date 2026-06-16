@@ -51,6 +51,46 @@ static TapZone getTapZone(UIGestureRecognizer *gesture, CGPoint *outPoint) {
 @synthesize sessionManager = _sessionManager, textColor = _textColor;
 @synthesize backgroundColor = _backgroundColor, cursorVisible = _cursorVisible;
 
+static UIColor *sColorTable[256];
+static BOOL sColorTableInited = NO;
+
++ (void)initialize {
+    if (sColorTableInited) return;
+    sColorTableInited = YES;
+
+    sColorTable[0]  = [[UIColor alloc] initWithRed:0.00 green:0.00 blue:0.00 alpha:1];
+    sColorTable[1]  = [[UIColor alloc] initWithRed:0.67 green:0.00 blue:0.00 alpha:1];
+    sColorTable[2]  = [[UIColor alloc] initWithRed:0.00 green:0.67 blue:0.00 alpha:1];
+    sColorTable[3]  = [[UIColor alloc] initWithRed:0.67 green:0.67 blue:0.00 alpha:1];
+    sColorTable[4]  = [[UIColor alloc] initWithRed:0.00 green:0.00 blue:0.67 alpha:1];
+    sColorTable[5]  = [[UIColor alloc] initWithRed:0.67 green:0.00 blue:0.67 alpha:1];
+    sColorTable[6]  = [[UIColor alloc] initWithRed:0.00 green:0.67 blue:0.67 alpha:1];
+    sColorTable[7]  = [[UIColor alloc] initWithRed:0.67 green:0.67 blue:0.67 alpha:1];
+    sColorTable[8]  = [[UIColor alloc] initWithRed:0.33 green:0.33 blue:0.33 alpha:1];
+    sColorTable[9]  = [[UIColor alloc] initWithRed:1.00 green:0.33 blue:0.33 alpha:1];
+    sColorTable[10] = [[UIColor alloc] initWithRed:0.33 green:1.00 blue:0.33 alpha:1];
+    sColorTable[11] = [[UIColor alloc] initWithRed:1.00 green:1.00 blue:0.33 alpha:1];
+    sColorTable[12] = [[UIColor alloc] initWithRed:0.33 green:0.33 blue:1.00 alpha:1];
+    sColorTable[13] = [[UIColor alloc] initWithRed:1.00 green:0.33 blue:1.00 alpha:1];
+    sColorTable[14] = [[UIColor alloc] initWithRed:0.33 green:1.00 blue:1.00 alpha:1];
+    sColorTable[15] = [[UIColor alloc] initWithRed:1.00 green:1.00 blue:1.00 alpha:1];
+
+    for (int i = 0; i < 216; i++) {
+        int r = i / 36;
+        int g = (i / 6) % 6;
+        int b = i % 6;
+        CGFloat cr = (r > 0) ? (CGFloat)(r * 40 + 55) / 255.0 : 0.0;
+        CGFloat cg = (g > 0) ? (CGFloat)(g * 40 + 55) / 255.0 : 0.0;
+        CGFloat cb = (b > 0) ? (CGFloat)(b * 40 + 55) / 255.0 : 0.0;
+        sColorTable[16 + i] = [[UIColor alloc] initWithRed:cr green:cg blue:cb alpha:1];
+    }
+
+    for (int i = 0; i < 24; i++) {
+        CGFloat gs = (CGFloat)(i * 10 + 8) / 255.0;
+        sColorTable[232 + i] = [[UIColor alloc] initWithRed:gs green:gs blue:gs alpha:1];
+    }
+}
+
 - (id)initWithFrame:(CGRect)frame {
     if ((self = [super initWithFrame:frame])) {
         self.backgroundColor = [UIColor colorWithRed:0.0 green:0.0 blue:0.0 alpha:1.0];
@@ -165,8 +205,8 @@ static TapZone getTapZone(UIGestureRecognizer *gesture, CGPoint *outPoint) {
 
 - (void)deleteBackward {
     if (!_sessionManager) return;
-    unsigned char del = 0x7F;
-    NSData *data = [NSData dataWithBytes:&del length:1];
+    unsigned char bs = 0x08;
+    NSData *data = [NSData dataWithBytes:&bs length:1];
     [_sessionManager sendData:data];
 }
 
@@ -200,6 +240,12 @@ static TapZone getTapZone(UIGestureRecognizer *gesture, CGPoint *outPoint) {
 
 - (void)handleTapGesture:(UIGestureRecognizer *)gesture {
     if (gesture.state != UIGestureRecognizerStateEnded) return;
+
+    if (![self isFirstResponder]) {
+        [self showKeyboard];
+        return;
+    }
+
     if (!_sessionManager || !_sessionManager.isConnected) return;
 
     BOOL shift = NO;
@@ -208,29 +254,16 @@ static TapZone getTapZone(UIGestureRecognizer *gesture, CGPoint *outPoint) {
 
     unsigned char key = 0;
     switch (getTapZone(gesture, NULL)) {
-        case kTapZoneTop:
-            key = shift ? 0x06 : 0x1B; break;  // PageUp or ESC-like up arrow
-        case kTapZoneBottom:
-            key = shift ? 0x07 : 0x1C; break;  // PageDown or down-like
-        case kTapZoneLeft:
-            key = shift ? 0x08 : 0x1D; break;  // Home or left-like
-        case kTapZoneRight:
-            key = shift ? 0x09 : 0x1E; break;  // End or right-like
-        case kTapZoneTopLeft:     key = 0x1B; break;  // ESC
-        case kTapZoneTopRight:    key = 0x7F; break;  // DEL
-        case kTapZoneBottomLeft:  key = 0x1B; break;  // ESC
-        case kTapZoneBottomRight: {
-            [self becomeFirstResponder];
+        case kTapZoneTop:     key = shift ? 0x10 : 0x1B; break;
+        case kTapZoneBottom:  key = shift ? 0x0E : 0x1C; break;
+        case kTapZoneLeft:    key = shift ? 0x02 : 0x1D; break;
+        case kTapZoneRight:   key = shift ? 0x06 : 0x1E; break;
+        case kTapZoneTopLeft:     key = 0x1B; break;
+        case kTapZoneTopRight:    key = 0x7F; break;
+        case kTapZoneBottomLeft:  key = 0x1B; break;
+        case kTapZoneBottomRight:
+        case kTapZoneCenter:
             return;
-        }
-        case kTapZoneCenter: {
-            if ([self isFirstResponder]) {
-                [self hideKeyboard];
-            } else {
-                [self showKeyboard];
-            }
-            return;
-        }
         default: return;
     }
 
@@ -542,18 +575,54 @@ static TapZone getTapZone(UIGestureRecognizer *gesture, CGPoint *outPoint) {
 }
 
 - (UIColor *)colorFromANSICode:(NSString *)code {
+    NSArray *parts = [code componentsSeparatedByString:@";"];
+    NSInteger count = [parts count];
+    if (count == 0) return self.textColor;
+
+    NSInteger p0 = [[parts objectAtIndex:0] integerValue];
+
+    if (count >= 3 && p0 == 38 && [[parts objectAtIndex:1] integerValue] == 5) {
+        NSInteger idx = [[parts objectAtIndex:2] integerValue];
+        if (idx >= 0 && idx < 256) return sColorTable[idx];
+        return self.textColor;
+    }
+    if (count >= 3 && p0 == 48 && [[parts objectAtIndex:1] integerValue] == 5) {
+        return self.textColor;
+    }
+    if (count >= 5 && p0 == 38 && [[parts objectAtIndex:1] integerValue] == 2) {
+        CGFloat r = (CGFloat)[[parts objectAtIndex:2] integerValue] / 255.0;
+        CGFloat g = (CGFloat)[[parts objectAtIndex:3] integerValue] / 255.0;
+        CGFloat b = (CGFloat)[[parts objectAtIndex:4] integerValue] / 255.0;
+        return [UIColor colorWithRed:r green:g blue:b alpha:1];
+    }
+    if (count >= 5 && p0 == 48 && [[parts objectAtIndex:1] integerValue] == 2) {
+        return self.textColor;
+    }
+
     if ([code isEqualToString:@"0"] || [code isEqualToString:@""]) {
         return self.textColor;
     }
     if ([code isEqualToString:@"1"]) return self.textColor;
-    if ([code isEqualToString:@"30"]) return [UIColor blackColor];
-    if ([code isEqualToString:@"31"]) return [UIColor redColor];
-    if ([code isEqualToString:@"32"]) return [UIColor greenColor];
-    if ([code isEqualToString:@"33"]) return [UIColor yellowColor];
-    if ([code isEqualToString:@"34"]) return [UIColor blueColor];
-    if ([code isEqualToString:@"35"]) return [UIColor magentaColor];
-    if ([code isEqualToString:@"36"]) return [UIColor cyanColor];
-    if ([code isEqualToString:@"37"]) return [UIColor whiteColor];
+
+    switch (p0) {
+        case 30: return sColorTable[0];
+        case 31: return sColorTable[1];
+        case 32: return sColorTable[2];
+        case 33: return sColorTable[3];
+        case 34: return sColorTable[4];
+        case 35: return sColorTable[5];
+        case 36: return sColorTable[6];
+        case 37: return sColorTable[7];
+        case 90: return sColorTable[8];
+        case 91: return sColorTable[9];
+        case 92: return sColorTable[10];
+        case 93: return sColorTable[11];
+        case 94: return sColorTable[12];
+        case 95: return sColorTable[13];
+        case 96: return sColorTable[14];
+        case 97: return sColorTable[15];
+    }
+
     return self.textColor;
 }
 
