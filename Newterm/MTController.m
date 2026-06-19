@@ -608,6 +608,10 @@ static NSString* getTitle(VT100* terminal) {
 -(void)handleTapGesture:(UIGestureRecognizer*)gesture {
   if(!activeTerminal){return;}
   [[UIMenuController sharedMenuController] setMenuVisible:NO animated:YES];
+  if(self.isFirstResponder){
+    [self.view becomeFirstResponder];
+    return;
+  }
   UIKeyboardImpl* keyboard=[UIKeyboardImpl sharedInstance];
   BOOL shift=keyboard.isShifted;
   VT100Key key;
@@ -620,7 +624,9 @@ static NSString* getTitle(VT100* terminal) {
     case kTapZoneTopRight:key=kVT100KeyDelete;break;
     case kTapZoneBottomLeft:key=kVT100KeyEsc;break;
     case kTapZoneBottomRight:key=kVT100KeyTab;break;
-    default:return;
+    default:
+      [self becomeFirstResponder];
+      return;
   }
   [activeTerminal sendKey:key];
   if(shift && !keyboard.isShiftLocked){[keyboard setShift:NO];}
