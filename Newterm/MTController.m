@@ -354,6 +354,19 @@ static NSString* getTitle(VT100* terminal) {
   }
   return YES;
 }
+-(void)viewWillAppear:(BOOL)animated {
+  NSUserDefaults* defaults=[NSUserDefaults standardUserDefaults];
+  NSString* name=[NSBundle mainBundle].bundleIdentifier;
+  NSDictionary* settings=[defaults persistentDomainForName:name];
+  NSNumber* savedFontSize=[settings objectForKey:@"fontSize"];
+  if([savedFontSize isKindOfClass:[NSNumber class]]){
+    CGFloat newSize=savedFontSize.doubleValue;
+    if(newSize>0 && fabs(newSize-CTFontGetSize(ctFont))>0.01){
+      [self handleOpenURL:nil];
+    }
+  }
+  [super viewWillAppear:animated];
+}
 -(BOOL)isRunning {
   for (VT100* terminal in allTerminals){
     if(terminal.isRunning){return YES;}
