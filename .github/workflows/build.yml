@@ -42,15 +42,6 @@ jobs:
         
         # Cleanup
         rm -f iPhoneOS6.0.sdk.zip
-
-        # Create symlinks so -lsystem_c / -lsystem_kernel work
-        # Modern ld64 doesn't follow LC_REEXPORT_DYLIB in old fat-stub dylibs
-        echo "=== Copying sub-library stubs to /usr/lib ==="
-        cd $THEOS/sdks/iPhoneOS6.0.sdk/usr/lib
-        for lib in system_c system_kernel; do
-          cp system/lib${lib}.dylib lib${lib}.dylib
-        done
-        ls -la libsystem_*.dylib
         
         echo ""
         echo "=== SDKs in THEOS ==="
