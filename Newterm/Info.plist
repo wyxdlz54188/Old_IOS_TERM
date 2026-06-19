@@ -5,9 +5,9 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleDisplayName</key>
-	<string>Terminal</string>
-	<key>CFBundleExecutable</key>
 	<string>NewTerm</string>
+	<key>CFBundleExecutable</key>
+	<string>Newterm</string>
 	<key>CFBundleIconFiles</key>
 	<array>
 		<string>Icon</string>
