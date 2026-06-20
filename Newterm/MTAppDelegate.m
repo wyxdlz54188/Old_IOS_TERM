@@ -24,7 +24,6 @@ static UIImage* createSettingsIcon() {
   CGFloat cx=15,cy=15,outerR=13,innerR=9;
 
   UIBezierPath* gear=[UIBezierPath bezierPath];
-  CGFloat toothW=3.5,toothH=5.5;
   NSInteger teeth=8;
 
   for(NSInteger i=0;i<teeth;i++){
