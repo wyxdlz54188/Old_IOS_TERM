@@ -19,6 +19,7 @@ MarkdownCode.m_CFLAGS = -fobjc-arc
 MarkdownLink.m_CFLAGS = -fobjc-arc
 MarkdownImage.m_CFLAGS = -fobjc-arc
 MarkdownHorizontalRule.m_CFLAGS = -fobjc-arc
+MarkdownTable.m_CFLAGS = -fobjc-arc
 NSString+Markdown.m_CFLAGS = -fobjc-arc
 
 Newterm_FRAMEWORKS = AudioToolbox CoreGraphics CoreText UIKit QuartzCore CoreFoundation

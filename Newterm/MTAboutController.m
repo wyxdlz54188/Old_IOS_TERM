@@ -1,5 +1,6 @@
 #import "MTAboutController.h"
 #import "Core/MarkdownParser.h"
+#import <CoreText/CoreText.h>
 
 @interface MTAboutController () <UIWebViewDelegate>
 @end
@@ -81,21 +82,28 @@
     [attrString enumerateAttributesInRange:NSMakeRange(0, attrString.length)
                                    options:0
                                 usingBlock:^(NSDictionary *attrs, NSRange range, BOOL *stop) {
-        NSString *text = [[attrString.string substringWithRange:range] stringByReplacingOccurrencesOfString:@"&" withString:@"&amp;"];
+        NSString *rawText = [attrString.string substringWithRange:range];
+        NSString *tag = attrs[@"MDElementType"];
+        
+        if ([tag isEqualToString:@"table"]) {
+            [html appendString:rawText];
+            return;
+        }
+        
+        NSString *text = [rawText stringByReplacingOccurrencesOfString:@"&" withString:@"&amp;"];
         text = [text stringByReplacingOccurrencesOfString:@"<" withString:@"&lt;"];
         text = [text stringByReplacingOccurrencesOfString:@">" withString:@"&gt;"];
         text = [text stringByReplacingOccurrencesOfString:@"\n" withString:@"<br>"];
         
         UIFont *font = attrs[NSFontAttributeName];
         if (font) {
-            CGFloat size = font.pointSize;
-            BOOL isBold = [[font fontName] rangeOfString:@"bold" options:NSCaseInsensitiveSearch].location != NSNotFound;
-            BOOL isItalic = [[font fontName] rangeOfString:@"italic" options:NSCaseInsensitiveSearch].location != NSNotFound;
+            CTFontRef ctFont = (CTFontRef)font;
+            CTFontSymbolicTraits traits = CTFontGetSymbolicTraits(ctFont);
+            BOOL isBold = (traits & kCTFontBoldTrait) != 0;
+            BOOL isItalic = (traits & kCTFontItalicTrait) != 0;
             
             if (isBold && isItalic) {
                 [html appendFormat:@"<b><i>%@</i></b>", text];
-            } else if (isBold && size >= 20) {
-                [html appendFormat:@"<h2>%@</h2>", text];
             } else if (isBold) {
                 [html appendFormat:@"<b>%@</b>", text];
             } else if (isItalic) {

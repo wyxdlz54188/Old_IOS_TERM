@@ -12,6 +12,7 @@
 #import "MarkdownLink.h"
 #import "MarkdownImage.h"
 #import "MarkdownHorizontalRule.h"
+#import "MarkdownTable.h"
 #import "NSString+Markdown.h"
 
 @interface MarkdownParser ()
@@ -40,6 +41,7 @@
     // 块级元素
     self.blockElements = @[
         [[MarkdownHeader alloc] init],
+        [[MarkdownTable alloc] init],
         [[MarkdownList alloc] init],
         [[MarkdownQuote alloc] init],
         [[MarkdownCode alloc] init],
