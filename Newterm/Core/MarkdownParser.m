@@ -122,10 +122,10 @@
            matchingPattern:@"__([^_]+)__"
        toAttributedString:attrString];
 
-    // 处理 *斜体*
+    // 处理 *斜体*（粗体已处理，剩余单*即为斜体）
     [self applyAttribute:NSFontAttributeName
                   value:[UIFont italicSystemFontOfSize:self.configuration.defaultFont.pointSize]
-           matchingPattern:@"\\*(?!\\*)([^*]+)\\*(?!\\*)"
+           matchingPattern:@"\\*([^*]+)\\*"
        toAttributedString:attrString];
 
     // 处理 `行内代码`
