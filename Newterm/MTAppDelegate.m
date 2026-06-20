@@ -23,28 +23,43 @@ static UIImage* createSettingsIcon() {
 
   CGFloat cx=15,cy=15,outerR=13,innerR=9;
 
-  // 齿轮齿
-  [[UIColor colorWithWhite:0.7 alpha:1] setFill];
-  for(int i=0;i<8;i++){
-    CGFloat a=i*M_PI/4-M_PI/2;
-    CGFloat w=3,h=5;
-    CGContextRef ctx=UIGraphicsGetCurrentContext();
-    CGContextSaveGState(ctx);
-    CGContextTranslateCTM(ctx,cx+cosf(a)*innerR,cy+sinf(a)*innerR);
-    CGContextRotateCTM(ctx,a);
-    CGContextFillRect(ctx,CGRectMake(-w/2,-h/2,w,h));
-    CGContextRestoreGState(ctx);
-  }
+  UIBezierPath* gear=[UIBezierPath bezierPath];
+  CGFloat toothW=3.5,toothH=5.5;
+  NSInteger teeth=8;
 
-  // 外圈
-  [[UIColor colorWithWhite:0.5 alpha:1] setFill];
-  CGContextFillEllipseInRect(UIGraphicsGetCurrentContext(),CGRectMake(cx-outerR,cy-outerR,outerR*2,outerR*2));
-  // 内圈
+  for(NSInteger i=0;i<teeth;i++){
+    CGFloat a=i*M_PI*2/teeth-M_PI/2;
+    CGFloat sa=a-0.15,ea=a+0.15;
+    CGFloat innerX1=cx+cosf(sa)*innerR,innerY1=cy+sinf(sa)*innerR;
+    CGFloat innerX2=cx+cosf(ea)*innerR,innerY2=cy+sinf(ea)*innerR;
+    CGFloat outerX1=cx+cosf(sa)*outerR,outerY1=cy+sinf(sa)*outerR;
+    CGFloat outerX2=cx+cosf(ea)*outerR,outerY2=cy+sinf(ea)*outerR;
+
+    if(i==0){
+      [gear moveToPoint:CGPointMake(innerX1,innerY1)];
+      [gear addLineToPoint:CGPointMake(outerX1,outerY1)];
+    }
+    [gear addLineToPoint:CGPointMake(outerX2,outerY2)];
+    [gear addLineToPoint:CGPointMake(innerX2,innerY2)];
+
+    CGFloat na=i*M_PI*2/teeth-M_PI/2+M_PI/teeth;
+    CGFloat niX=cx+cosf(na)*innerR,niY=cy+sinf(na)*innerR;
+    [gear addQuadCurveToPoint:CGPointMake(niX,niY)
+                 controlPoint:CGPointMake(cx+cosf(na-M_PI/teeth*0.5)*(innerR+1),
+                                          cy+sinf(na-M_PI/teeth*0.5)*(innerR+1))];
+  }
+  [gear closePath];
+
+  [[UIColor colorWithWhite:0.55 alpha:1] setFill];
+  [gear fill];
+
+  UIBezierPath* center=[UIBezierPath bezierPathWithOvalInRect:CGRectMake(cx-4,cy-4,8,8)];
   [[UIColor colorWithWhite:0.35 alpha:1] setFill];
-  CGContextFillEllipseInRect(UIGraphicsGetCurrentContext(),CGRectMake(cx-innerR,cy-innerR,innerR*2,innerR*2));
-  // 中心圆
-  [[UIColor colorWithWhite:0.5 alpha:1] setFill];
-  CGContextFillEllipseInRect(UIGraphicsGetCurrentContext(),CGRectMake(cx-4,cy-4,8,8));
+  [center fill];
+
+  UIBezierPath* dot=[UIBezierPath bezierPathWithOvalInRect:CGRectMake(cx-2,cy-2,4,4)];
+  [[UIColor colorWithWhite:0.6 alpha:1] setFill];
+  [dot fill];
 
   UIImage* img=UIGraphicsGetImageFromCurrentImageContext();
   UIGraphicsEndImageContext();
