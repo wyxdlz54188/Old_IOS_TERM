@@ -27,6 +27,6 @@ Newterm_LDFLAGS = -lSystem_syms
 Newterm_RESOURCE_FILES = Info.plist Icon-72.png Icon-72@2x.png
 
 # 全局 MRC，MarkdownKit 文件通过上面的 _CFLAGS 覆盖为 ARC
-ADDITIONAL_OBJCFLAGS = -fno-objc-arc -include MTerminal_Prefix.pch -Wno-single-bit-bitfield-constant-conversion
+ADDITIONAL_OBJCFLAGS = -fno-objc-arc -include MTerminal_Prefix.pch -Wno-single-bit-bitfield-constant-conversion -I./Core -I./Elements -I./Extensions
 
 include $(THEOS_MAKE_PATH)/application.mk
