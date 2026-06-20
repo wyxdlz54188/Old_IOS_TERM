@@ -31,6 +31,7 @@ Newterm_DEPENDS = com.linusyang.localeentf8
 
 stage::
 	$(ECHO_NOTHING)cp assets/tab_settings.png "$(THEOS_STAGING_DIR)/Applications/Newterm.app/tab_settings.png"$(ECHO_END)
+	$(ECHO_NOTHING)cp assets/tab_settings@2x.png "$(THEOS_STAGING_DIR)/Applications/Newterm.app/tab_settings@2x.png"$(ECHO_END)
 
 # 全局 MRC，MarkdownKit 文件通过上面的 _CFLAGS 覆盖为 ARC
 ADDITIONAL_OBJCFLAGS = -fno-objc-arc -include MTerminal_Prefix.pch -Wno-single-bit-bitfield-constant-conversion -I./Core -I./Elements -I./Extensions
