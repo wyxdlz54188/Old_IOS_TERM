@@ -29,9 +29,11 @@
         if (fontSize < 12) fontSize = 12;
         
         UIFont *headerFont = [UIFont boldSystemFontOfSize:fontSize];
+        NSString *elementType = [NSString stringWithFormat:@"header-%ld", (long)level];
         NSDictionary *attributes = @{
             NSFontAttributeName: headerFont,
-            NSForegroundColorAttributeName: [UIColor blackColor]
+            NSForegroundColorAttributeName: [UIColor blackColor],
+            @"MDElementType": elementType
         };
         
         return [[NSAttributedString alloc] initWithString:content attributes:attributes];

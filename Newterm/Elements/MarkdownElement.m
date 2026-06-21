@@ -27,20 +27,9 @@
         if (match.numberOfRanges < 2) continue;
         
         NSRange contentRange = [match rangeAtIndex:1];
-        NSString *content = [string substringWithRange:contentRange];
         
-        NSMutableAttributedString *replacement = [[NSMutableAttributedString alloc] initWithString:content];
-        [replacement addAttributes:attributes range:NSMakeRange(0, content.length)];
-        
-        // 保留原有颜色
-        UIColor *color = [attrString attribute:NSForegroundColorAttributeName
-                                       atIndex:match.range.location
-                                effectiveRange:NULL];
-        if (color) {
-            [replacement addAttribute:NSForegroundColorAttributeName
-                                value:color
-                                range:NSMakeRange(0, content.length)];
-        }
+        NSMutableAttributedString *replacement = [[attrString attributedSubstringFromRange:contentRange] mutableCopy];
+        [replacement addAttributes:attributes range:NSMakeRange(0, replacement.length)];
         
         [attrString replaceCharactersInRange:match.range
                         withAttributedString:replacement];

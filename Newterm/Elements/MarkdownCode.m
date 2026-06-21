@@ -41,7 +41,8 @@
         NSDictionary *attributes = @{
             NSFontAttributeName: codeFont,
             NSForegroundColorAttributeName: [UIColor darkGrayColor],
-            NSBackgroundColorAttributeName: [UIColor colorWithWhite:0.95 alpha:1.0]
+            NSBackgroundColorAttributeName: [UIColor colorWithWhite:0.95 alpha:1.0],
+            @"MDElementType": @"code-block"
         };
         
         return [[NSAttributedString alloc] initWithString:codeBlock attributes:attributes];

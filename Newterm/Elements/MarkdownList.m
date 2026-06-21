@@ -40,7 +40,8 @@
         
         NSDictionary *attributes = @{
             NSFontAttributeName: [UIFont systemFontOfSize:14],
-            NSForegroundColorAttributeName: [UIColor blackColor]
+            NSForegroundColorAttributeName: [UIColor blackColor],
+            @"MDElementType": @"list-item"
         };
         
         return [[NSAttributedString alloc] initWithString:resultString attributes:attributes];

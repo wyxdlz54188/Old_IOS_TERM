@@ -18,7 +18,8 @@
     UIFont *italicFont = [UIFont italicSystemFontOfSize:14];
     NSDictionary *attributes = @{
         NSFontAttributeName: italicFont,
-        NSForegroundColorAttributeName: [UIColor grayColor]
+        NSForegroundColorAttributeName: [UIColor grayColor],
+        @"MDElementType": @"blockquote"
     };
     
     return [[NSAttributedString alloc] initWithString:content attributes:attributes];

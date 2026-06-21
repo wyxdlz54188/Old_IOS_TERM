@@ -26,13 +26,18 @@
         NSTextCheckingResult *match = matches[i];
         if (match.numberOfRanges < 3) continue;
 
+        NSRange urlRange = [match rangeAtIndex:2];
+        NSString *url = [string substringWithRange:urlRange];
         NSRange altRange = [match rangeAtIndex:1];
         NSString *alt = [string substringWithRange:altRange];
         if (alt.length == 0) alt = @"Image";
 
         NSDictionary *attributes = @{
             NSFontAttributeName: [UIFont italicSystemFontOfSize:configuration.defaultFont.pointSize],
-            NSForegroundColorAttributeName: [UIColor grayColor]
+            NSForegroundColorAttributeName: [UIColor grayColor],
+            @"MDImageURL": url,
+            @"MDImageAlt": alt,
+            @"MDElementType": @"image"
         };
 
         NSString *replacement = [NSString stringWithFormat:@"[%@]", alt];

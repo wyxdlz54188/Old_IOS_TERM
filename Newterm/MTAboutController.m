@@ -69,55 +69,164 @@
     [html appendString:@"body{font-family:-apple-system,Helvetica;font-size:14px;color:#333;padding:16px;line-height:1.6;background:#fff}"];
     [html appendString:@"h1{font-size:24px;text-align:center;margin:16px 0}"];
     [html appendString:@"h2{font-size:18px;color:#555;margin:20px 0 10px}"];
-    [html appendString:@"table{width:100%;border-collapse:collapse;margin:10px 0}"];
+    [html appendString:@"h3{font-size:16px;color:#555;margin:16px 0 8px}"];
+    [html appendString:@"h4,h5,h6{font-size:14px;color:#555;margin:12px 0 6px}"];
+    [html appendString:@"table{width:100%%;border-collapse:collapse;margin:10px 0}"];
     [html appendString:@"td,th{border:1px solid #ddd;padding:8px}"];
     [html appendString:@"th{background:#f5f5f5}"];
-    [html appendString:@"code{background:#f0f0f0;padding:2px 6px;border-radius:3px}"];
+    [html appendString:@"code{background:#f0f0f0;padding:2px 6px;border-radius:3px;font-family:Courier,monospace}"];
+    [html appendString:@"pre{background:#f5f5f5;padding:12px;border-radius:4px;overflow-x:auto;white-space:pre-wrap}"];
+    [html appendString:@"pre code{background:none;padding:0}"];
     [html appendString:@"hr{border:none;border-top:1px solid #eee;margin:20px 0}"];
     [html appendString:@"a{color:#0366d6}"];
-    [html appendString:@"img{max-width:100%}"];
+    [html appendString:@"img{max-width:100%%}"];
+    [html appendString:@"blockquote{border-left:3px solid #ddd;padding:4px 12px;margin:12px 0;color:#666}"];
+    [html appendString:@"ul,ol{padding-left:24px;margin:8px 0}"];
+    [html appendString:@"li{margin:4px 0}"];
+    [html appendString:@"p{margin:8px 0}"];
     [html appendString:@"</style></head><body>"];
     
-    // 逐段转换
+    __block BOOL inParagraph = NO;
+    __block BOOL inList = NO;
+    
+    void (^closeParagraph)(void) = ^{
+        if (inParagraph) {
+            [html appendString:@"</p>"];
+            inParagraph = NO;
+        }
+    };
+    
+    void (^closeList)(void) = ^{
+        if (inList) {
+            [html appendString:@"</ul>"];
+            inList = NO;
+        }
+    };
+    
     [attrString enumerateAttributesInRange:NSMakeRange(0, attrString.length)
                                    options:0
                                 usingBlock:^(NSDictionary *attrs, NSRange range, BOOL *stop) {
         NSString *rawText = [attrString.string substringWithRange:range];
         NSString *tag = attrs[@"MDElementType"];
         
+        if ([tag hasPrefix:@"header-"]) {
+            closeParagraph();
+            closeList();
+            NSString *levelStr = [tag substringFromIndex:7];
+            NSString *text = [self escapeHTML:rawText];
+            [html appendFormat:@"<h%@>%@</h%@>", levelStr, text, levelStr];
+            return;
+        }
+        
+        if ([tag isEqualToString:@"hr"]) {
+            closeParagraph();
+            closeList();
+            [html appendString:@"<hr>"];
+            return;
+        }
+        
+        if ([tag isEqualToString:@"list-item"]) {
+            closeParagraph();
+            if (!inList) {
+                [html appendString:@"<ul>"];
+                inList = YES;
+            }
+            NSString *text = [self formatInlineText:rawText withAttributes:attrs];
+            [html appendFormat:@"<li>%@</li>", text];
+            return;
+        }
+        
+        if ([tag isEqualToString:@"code-block"]) {
+            closeParagraph();
+            closeList();
+            NSString *text = [self escapeHTML:rawText];
+            [html appendFormat:@"<pre><code>%@</code></pre>", text];
+            return;
+        }
+        
+        if ([tag isEqualToString:@"blockquote"]) {
+            closeParagraph();
+            closeList();
+            NSString *text = [self formatInlineText:rawText withAttributes:attrs];
+            [html appendFormat:@"<blockquote>%@</blockquote>", text];
+            return;
+        }
+        
         if ([tag isEqualToString:@"table"]) {
+            closeParagraph();
+            closeList();
             [html appendString:rawText];
             return;
         }
         
-        NSString *text = [rawText stringByReplacingOccurrencesOfString:@"&" withString:@"&amp;"];
-        text = [text stringByReplacingOccurrencesOfString:@"<" withString:@"&lt;"];
-        text = [text stringByReplacingOccurrencesOfString:@">" withString:@"&gt;"];
-        text = [text stringByReplacingOccurrencesOfString:@"\n" withString:@"<br>"];
+        closeList();
         
-        UIFont *font = attrs[NSFontAttributeName];
-        if (font) {
-            CTFontRef ctFont = (CTFontRef)font;
-            CTFontSymbolicTraits traits = CTFontGetSymbolicTraits(ctFont);
-            BOOL isBold = (traits & kCTFontBoldTrait) != 0;
-            BOOL isItalic = (traits & kCTFontItalicTrait) != 0;
-            
-            if (isBold && isItalic) {
-                [html appendFormat:@"<b><i>%@</i></b>", text];
-            } else if (isBold) {
-                [html appendFormat:@"<b>%@</b>", text];
-            } else if (isItalic) {
-                [html appendFormat:@"<i>%@</i>", text];
-            } else {
-                [html appendString:text];
-            }
-        } else {
-            [html appendString:text];
+        NSString *trimmed = [rawText stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        if (trimmed.length == 0) {
+            closeParagraph();
+            return;
         }
+        
+        if (!inParagraph) {
+            [html appendString:@"<p>"];
+            inParagraph = YES;
+        }
+        
+        NSString *text = [self formatInlineText:rawText withAttributes:attrs];
+        [html appendString:text];
     }];
+    
+    closeParagraph();
+    closeList();
     
     [html appendString:@"</body></html>"];
     return html;
+}
+
+- (NSString *)formatInlineText:(NSString *)text withAttributes:(NSDictionary *)attrs {
+    NSString *tag = attrs[@"MDElementType"];
+    
+    if ([tag isEqualToString:@"link"]) {
+        NSString *url = attrs[@"MDLinkURL"] ?: @"#";
+        NSString *escaped = [self escapeHTML:text];
+        return [NSString stringWithFormat:@"<a href=\"%@\">%@</a>", url, escaped];
+    }
+    
+    if ([tag isEqualToString:@"image"]) {
+        NSString *url = attrs[@"MDImageURL"] ?: @"";
+        NSString *alt = attrs[@"MDImageAlt"] ?: @"";
+        NSString *escapedURL = [self escapeHTML:url];
+        NSString *escapedAlt = [self escapeHTML:alt];
+        return [NSString stringWithFormat:@"<img src=\"%@\" alt=\"%@\">", escapedURL, escapedAlt];
+    }
+    
+    NSString *escaped = [self escapeHTML:text];
+    
+    UIFont *font = attrs[NSFontAttributeName];
+    if (font) {
+        CTFontRef ctFont = (CTFontRef)font;
+        CTFontSymbolicTraits traits = CTFontGetSymbolicTraits(ctFont);
+        BOOL isBold = (traits & kCTFontBoldTrait) != 0;
+        BOOL isItalic = (traits & kCTFontItalicTrait) != 0;
+        
+        if (isBold && isItalic) {
+            return [NSString stringWithFormat:@"<b><i>%@</i></b>", escaped];
+        } else if (isBold) {
+            return [NSString stringWithFormat:@"<b>%@</b>", escaped];
+        } else if (isItalic) {
+            return [NSString stringWithFormat:@"<i>%@</i>", escaped];
+        }
+    }
+    
+    return escaped;
+}
+
+- (NSString *)escapeHTML:(NSString *)text {
+    if (text.length == 0) return @"";
+    text = [text stringByReplacingOccurrencesOfString:@"&" withString:@"&amp;"];
+    text = [text stringByReplacingOccurrencesOfString:@"<" withString:@"&lt;"];
+    text = [text stringByReplacingOccurrencesOfString:@">" withString:@"&gt;"];
+    return text;
 }
 
 @end

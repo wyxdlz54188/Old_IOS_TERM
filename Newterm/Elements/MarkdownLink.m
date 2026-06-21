@@ -26,6 +26,8 @@
         NSTextCheckingResult *match = matches[i];
         if (match.numberOfRanges < 3) continue;
 
+        NSRange urlRange = [match rangeAtIndex:2];
+        NSString *url = [string substringWithRange:urlRange];
         NSRange textRange = [match rangeAtIndex:1];
         NSString *text = [string substringWithRange:textRange];
 
@@ -33,7 +35,9 @@
         NSDictionary *attributes = @{
             NSFontAttributeName: configuration.defaultFont,
             NSForegroundColorAttributeName: linkColor,
-            NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle)
+            NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle),
+            @"MDLinkURL": url,
+            @"MDElementType": @"link"
         };
 
         NSMutableAttributedString *replacementAttr = [[NSMutableAttributedString alloc] initWithString:text

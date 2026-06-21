@@ -24,7 +24,8 @@
 - (NSAttributedString *)parseLines:(NSArray *)lines atIndex:(NSInteger)index {
     NSDictionary *attributes = @{
         NSFontAttributeName: [UIFont systemFontOfSize:12],
-        NSForegroundColorAttributeName: [UIColor lightGrayColor]
+        NSForegroundColorAttributeName: [UIColor lightGrayColor],
+        @"MDElementType": @"hr"
     };
 
     return [[NSAttributedString alloc] initWithString:@"\n───\n" attributes:attributes];
